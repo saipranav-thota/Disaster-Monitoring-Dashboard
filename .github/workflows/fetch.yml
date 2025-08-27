@@ -20,12 +20,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
           pip install h3 pyyaml pandas requests
 
       - name: Run Wildfire Pipeline
         run: |
-          python src/etl/fetch.py
+          python src/etl/loader.py
 
       - name: Merge & remove duplicates
         run: |
@@ -52,4 +51,4 @@ jobs:
           git config --global user.email "actions@github.com"
           git add data/processed/fused_latest.csv
           git commit -m "Update fused_latest.csv via GitHub Actions" || echo "No changes to commit"
-          git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }} HEAD:main
+          git push https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY} HEAD:main
