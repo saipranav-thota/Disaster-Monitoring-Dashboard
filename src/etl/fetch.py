@@ -37,6 +37,7 @@ def fetch_viirs(last_hours=24):
         return None
     try:    
         df = pd.read_csv(StringIO(resp.text))
+        df.to_csv("data/raw/fused_latest_raw.csv", index=False)
         return df
     except Exception as e:
         print(f"Error: {e}")
@@ -55,7 +56,7 @@ def normalize(df):
 def run_pipeline():
     viirs = fetch_viirs()
     v_norm = normalize(viirs)
-    v_norm.to_csv("data/processed/fused_latest.csv", index=False)
+    v_norm.to_csv("data/processed/fused_latest_processed.csv", index=False)
     print("Stored data as csv file")
 
 
