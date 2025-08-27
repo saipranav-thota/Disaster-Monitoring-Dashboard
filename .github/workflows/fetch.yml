@@ -1,0 +1,55 @@
+name: Wildfire Data Pipeline
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"   
+  workflow_dispatch:         
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install h3 pyyaml pandas requests
+
+      - name: Run Wildfire Pipeline
+        run: |
+          python src/etl/fetch.py
+
+      - name: Merge & remove duplicates
+        run: |
+          python - <<'EOF'
+          import pandas as pd
+          import os
+
+          output_file = "data/processed/fused_latest.csv"
+          new_file = "data/processed/fused_latest.csv"  # fetch.py output
+
+          if os.path.exists(output_file):
+              existing = pd.read_csv(output_file)
+              new_data = pd.read_csv(new_file)
+              combined = pd.concat([existing, new_data]).drop_duplicates(subset=["h3_cell","time_bucket"])
+              combined.to_csv(output_file, index=False)
+              print(f"Total rows after merge: {len(combined)}")
+          else:
+              print("No existing file, keeping new data as is.")
+          EOF
+
+      - name: Commit and push CSV
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add data/processed/fused_latest.csv
+          git commit -m "Update fused_latest.csv via GitHub Actions" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }} HEAD:main

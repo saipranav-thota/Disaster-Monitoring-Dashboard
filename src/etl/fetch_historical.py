@@ -6,6 +6,7 @@ import requests
 import yaml
 from io import StringIO
 import h3
+import os
 
 def load_config(path="config.yaml"):
     with open("config.yaml", "r") as f:
@@ -27,7 +28,7 @@ def fetch_firms_data(source):
         return None
 
 
-def fetch_viirs(last_hours=24):
+def fetch_historical(dataset_name, start_date, end_date):
     config = load_config()
     MAP_KEY = config["firms"]["map_key"]
     url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/VIIRS_NOAA20_NRT/world/1"  
@@ -43,22 +44,30 @@ def fetch_viirs(last_hours=24):
         return None
     
 
-def normalize(df):
+def normalize(df, source):
     df["time_bucket"] = pd.to_datetime(df["acq_time"]).dt.floor("30min")
     df["h3_cell"] = df.apply(
                             lambda r: h3.latlng_to_cell(r["latitude"], r["longitude"], 6),
                             axis=1
                             )
+    df["source"] = source
     return df[["h3_cell", "time_bucket", "confidence", "frp", "daynight"]]
 
 
+HISTORICAL_DATASET = {"dataset": "VIIRS_SNPP_SP", "start": "2012-01-20", "end": "2025-02-28"}
+
 def run_pipeline():
-    viirs = fetch_viirs()
-    v_norm = normalize(viirs)
-    v_norm.to_csv("data/processed/fused_latest.csv", index=False)
+    data = fetch_historical(
+        HISTORICAL_DATASET["dataset"],
+        HISTORICAL_DATASET["start"],
+        HISTORICAL_DATASET["end"]
+    )
+    df = normalize(data, HISTORICAL_DATASET["dataset"])
+    file_path = "data/archive/historical_data.csv"
+    df.to_csv(file_path, index=False)
     print("Stored data as csv file")
+
 
 
 if __name__ == "__main__":
     run_pipeline()
-    # fetch_viirs()

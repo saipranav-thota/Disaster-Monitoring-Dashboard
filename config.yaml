@@ -1,0 +1,3 @@
+firms:
+  base_url: "https://firms.modaps.eosdis.nasa.gov/api/area/csv"
+  map_key: "e44aba680b848899640bacf2d3672ece"
