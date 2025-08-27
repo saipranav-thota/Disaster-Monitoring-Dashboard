@@ -45,7 +45,8 @@ def fetch_historical(dataset_name, start_date, end_date):
     
 
 def normalize(df, source):
-    df["time_bucket"] = pd.to_datetime(df["acq_time"]).dt.floor("30min")
+    df['acq_datetime'] = pd.to_datetime(df['acq_date'] + ' ' + df['acq_time'].astype(str).str.zfill(4), format='%Y-%m-%d %H%M')
+    df["time_bucket"] = pd.to_datetime(df["acq_datetime"]).dt.floor("30min")
     df["h3_cell"] = df.apply(
                             lambda r: h3.latlng_to_cell(r["latitude"], r["longitude"], 6),
                             axis=1

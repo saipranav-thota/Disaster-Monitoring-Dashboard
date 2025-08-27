@@ -27,10 +27,10 @@ def fetch_firms_data(source):
         return None
 
 
-def fetch_viirs(last_hours=24):
+def fetch_viirs():
     config = load_config()
     MAP_KEY = config["firms"]["map_key"]
-    url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/VIIRS_NOAA20_NRT/world/1"  
+    url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/VIIRS_NOAA20_NRT/world/3"  
     resp = requests.get(url)
     if resp.status_code != 200:
         print(f"[VIIRS] Error {resp.status_code}: {resp.text[:200]}")
@@ -43,21 +43,6 @@ def fetch_viirs(last_hours=24):
         print(f"Error: {e}")
         return None
     
-
-def normalize(df):
-    df["time_bucket"] = pd.to_datetime(df["acq_time"]).dt.floor("30min")
-    df["h3_cell"] = df.apply(
-                            lambda r: h3.latlng_to_cell(r["latitude"], r["longitude"], 6),
-                            axis=1
-                            )
-    return df[["h3_cell", "time_bucket", "confidence", "frp", "daynight"]]
-
-
-def run_pipeline():
-    viirs = fetch_viirs()
-    v_norm = normalize(viirs)
-    v_norm.to_csv("data/processed/fused_latest_processed.csv", index=False)
-    print("Stored data as csv file")
 
 
 if __name__ == "__main__":

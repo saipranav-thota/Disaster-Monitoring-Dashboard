@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install h3 pyyaml pandas requests
+          pip install h3 pyyaml pandas requests os
 
       - name: Run Wildfire Pipeline
         run: |
