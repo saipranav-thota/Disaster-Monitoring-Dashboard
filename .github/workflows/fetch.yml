@@ -24,7 +24,7 @@ jobs:
 
       - name: Run Wildfire Pipeline
         run: |
-          python src/etl/preprocess.py
+          python src/etl/etl_main.py
 
       - name: Merge & remove duplicates
         run: |
