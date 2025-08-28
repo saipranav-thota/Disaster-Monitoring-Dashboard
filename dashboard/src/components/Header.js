@@ -1,13 +1,6 @@
 import React from 'react';
 import './Header.css';
 
-const Search = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/>
-    <path d="m21 21-4.35-4.35"/>
-  </svg>
-);
-
 const MapPin = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
@@ -17,7 +10,7 @@ const MapPin = () => (
 
 const Header = ({ selectedLocation }) => {
   return (
-    <header className="header">
+    <div className="header">
       <div className="header-left">
         <div className="logo">
           <MapPin size={24} />
@@ -31,7 +24,7 @@ const Header = ({ selectedLocation }) => {
               </span>
             </div>
           ) : (
-            <span className="location-placeholder">Click on map to select location</span>
+            <span className="location-placeholder"></span>
           )}
         </div>
       </div>
@@ -39,7 +32,7 @@ const Header = ({ selectedLocation }) => {
       <div className="header-right">
         <span className="system-title">Wildfire Monitoring System</span>
       </div>
-    </header>
+    </div>
   );
 };
 

@@ -2,65 +2,12 @@ import React, { useState } from 'react';
 import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
 import './MapView.css';
 
-// Mock data for different locations
-const locationData = {
-  'california': {
-    name: 'California',
-    temperature: '95°F',
-    humidity: '15%',
-    windSpeed: '25 mph',
-    riskLevel: 'Extreme',
-    activeFiresCount: 12,
-    evacuationZones: 3,
-    resources: {
-      helicopters: 8,
-      fireTeams: 15
-    }
-  },
-  'texas': {
-    name: 'Texas',
-    temperature: '102°F',
-    humidity: '12%',
-    windSpeed: '18 mph',
-    riskLevel: 'High',
-    activeFiresCount: 6,
-    evacuationZones: 1,
-    resources: {
-      helicopters: 4,
-      fireTeams: 8
-    }
-  },
-  'florida': {
-    name: 'Florida',
-    temperature: '88°F',
-    humidity: '65%',
-    windSpeed: '12 mph',
-    riskLevel: 'Low',
-    activeFiresCount: 1,
-    evacuationZones: 0,
-    resources: {
-      helicopters: 2,
-      fireTeams: 3
-    }
-  }
-};
-
-const MapClickHandler = ({ onLocationClick }) => {
-  useMapEvents({
+const MapClickHandler = ({ onLocationClick, setMap }) => {
+  const map = useMapEvents({
     click: (e) => {
       const { lat, lng } = e.latlng;
-      
-      // Determine location based on coordinates (simplified)
-      let location = 'default';
-      if (lat > 32 && lat < 42 && lng > -124 && lng < -114) {
-        location = 'california';
-      } else if (lat > 25 && lat < 36 && lng > -106 && lng < -93) {
-        location = 'texas';
-      } else if (lat > 24 && lat < 31 && lng > -87 && lng < -80) {
-        location = 'florida';
-      }
-      
-      const data = locationData[location] || {
+
+      const data = {
         name: 'Unknown Location',
         temperature: '78°F',
         humidity: '45%',
@@ -71,21 +18,27 @@ const MapClickHandler = ({ onLocationClick }) => {
         resources: {
           helicopters: 1,
           fireTeams: 2
-        }
-      };
-      
-      onLocationClick({
-        ...data,
+        },
         coordinates: { lat, lng }
-      });
+      };
+
+      onLocationClick(data);
     }
   });
-  
+
+  // Set the map reference when component mounts
+  React.useEffect(() => {
+    if (setMap) {
+      setMap(map);
+    }
+  }, [map, setMap]);
+
   return null;
 };
 
 const MapView = ({ onLocationClick }) => {
   const [mapType, setMapType] = useState('satellite');
+  const [map, setMap] = useState(null);
 
   const mapTypes = {
     satellite: {
@@ -94,11 +47,23 @@ const MapView = ({ onLocationClick }) => {
     },
     terrain: {
       url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+      attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     },
     street: {
       url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }
+  };
+
+  const handleZoomIn = () => {
+    if (map) {
+      map.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (map) {
+      map.zoomOut();
     }
   };
 
@@ -119,10 +84,20 @@ const MapView = ({ onLocationClick }) => {
         </div>
       </div>
 
+      {/* Zoom Controls */}
+      <div className="zoom-controls">
+        <button className="zoom-btn" onClick={handleZoomIn} title="Zoom In">
+          +
+        </button>
+        <button className="zoom-btn" onClick={handleZoomOut} title="Zoom Out">
+          −
+        </button>
+      </div>
+
       <MapContainer
         center={[39.8283, -98.5795]}
-        zoom={4}
-        style={{ height: '100%', width: '100%' }}
+        zoom={2}
+        className="map-fullscreen"
         zoomControl={false}
       >
         <TileLayer
@@ -130,16 +105,8 @@ const MapView = ({ onLocationClick }) => {
           url={mapTypes[mapType].url}
           attribution={mapTypes[mapType].attribution}
         />
-        <MapClickHandler onLocationClick={onLocationClick} />
+        <MapClickHandler onLocationClick={onLocationClick} setMap={setMap} />
       </MapContainer>
-      
-      {/* Heat overlay simulation */}
-      <div className="heat-overlay">
-        <div className="heat-zone california"></div>
-        <div className="heat-zone texas"></div>
-        <div className="heat-zone arizona"></div>
-        <div className="heat-zone nevada"></div>
-      </div>
     </div>
   );
 };

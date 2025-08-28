@@ -16,11 +16,10 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
-      <Header selectedLocation={selectedLocation} />
       <div className="dashboard-content">
-
         <div className="map-container">
           <MapView onLocationClick={handleMapClick} />
+          <Header selectedLocation={selectedLocation} />
           <StatsOverlay isOpen={sidebarOpen} />
         </div>
       </div>
