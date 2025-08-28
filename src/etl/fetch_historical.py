@@ -5,8 +5,8 @@ import pandas as pd
 import requests 
 import yaml
 from io import StringIO
-import h3
-import os
+from preprocess import normalize
+from loader import load_to_db
 
 def load_config(path="config.yaml"):
     with open("config.yaml", "r") as f:
@@ -44,17 +44,6 @@ def fetch_historical(dataset_name, start_date, end_date):
         return None
     
 
-def normalize(df, source):
-    df['acq_datetime'] = pd.to_datetime(df['acq_date'] + ' ' + df['acq_time'].astype(str).str.zfill(4), format='%Y-%m-%d %H%M')
-    df["time_bucket"] = pd.to_datetime(df["acq_datetime"]).dt.floor("30min")
-    df["h3_cell"] = df.apply(
-                            lambda r: h3.latlng_to_cell(r["latitude"], r["longitude"], 6),
-                            axis=1
-                            )
-    df["source"] = source
-    return df[["h3_cell", "time_bucket", "confidence", "frp", "daynight"]]
-
-
 HISTORICAL_DATASET = {"dataset": "VIIRS_SNPP_SP", "start": "2012-01-20", "end": "2025-02-28"}
 
 def run_pipeline():
@@ -63,10 +52,13 @@ def run_pipeline():
         HISTORICAL_DATASET["start"],
         HISTORICAL_DATASET["end"]
     )
-    df = normalize(data, HISTORICAL_DATASET["dataset"])
+    df = normalize(data)
     file_path = "data/archive/historical_data.csv"
     df.to_csv(file_path, index=False)
     print("Stored data as csv file")
+    load_to_db(table_name="viirs_historical_data", path="data/archive/historical_data.csv")
+    print("Data stored in viirs_historical_data")
+    
 
 
 
