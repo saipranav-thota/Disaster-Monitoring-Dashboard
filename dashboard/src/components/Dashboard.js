@@ -10,8 +10,15 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleMapClick = (locationData) => {
-    setSelectedLocation(locationData);
-    setSidebarOpen(true); // Open bottom tabs and keep them open
+    // Only update location and open sidebar if it's a fire hotspot
+    if (locationData && locationData.fireData) {
+      setSelectedLocation(locationData);
+      setSidebarOpen(true);
+    } else {
+      // Clear selection and close sidebar for non-fire clicks
+      setSelectedLocation(null);
+      setSidebarOpen(false);
+    }
   };
 
   return (
@@ -20,7 +27,7 @@ const Dashboard = () => {
         <div className="map-container">
           <MapView onLocationClick={handleMapClick} />
           <Header selectedLocation={selectedLocation} />
-          <StatsOverlay isOpen={sidebarOpen} />
+          <StatsOverlay isOpen={sidebarOpen} selectedLocation={selectedLocation} />
         </div>
       </div>
     </div>
