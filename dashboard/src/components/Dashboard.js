@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import MapView from './MapView';
-
 import Header from './Header';
 import StatsOverlay from './StatsOverlay';
 import './Dashboard.css';

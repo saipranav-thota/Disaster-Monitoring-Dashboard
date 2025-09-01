@@ -1,19 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, useMapEvents, CircleMarker } from 'react-leaflet';
 import { cellToLatLng } from 'h3-js';
+import apiService from '../services/api';
 import './MapView.css';
-
-// Mock database data - H3 buckets with FRP intensity
-const mockFireDatabase = [
-  { h3Index: '8a2a1072b59ffff', frpIntensity: 85.2, timestamp: '2024-01-15T14:30:00Z' },
-  { h3Index: '8a2a1072b5bffff', frpIntensity: 142.7, timestamp: '2024-01-15T14:25:00Z' },
-  { h3Index: '8a2a1072b5dffff', frpIntensity: 67.3, timestamp: '2024-01-15T14:20:00Z' },
-  { h3Index: '8a2a1072b63ffff', frpIntensity: 203.8, timestamp: '2024-01-15T14:15:00Z' },
-  { h3Index: '8a2a1072b65ffff', frpIntensity: 91.4, timestamp: '2024-01-15T14:10:00Z' },
-  { h3Index: '8a2a1072b67ffff', frpIntensity: 156.9, timestamp: '2024-01-15T14:05:00Z' },
-  { h3Index: '8a2a1072b69ffff', frpIntensity: 78.1, timestamp: '2024-01-15T14:00:00Z' },
-  { h3Index: '8a2a1072b6bffff', frpIntensity: 234.5, timestamp: '2024-01-15T13:55:00Z' },
-];
 
 const MapClickHandler = ({ setMap }) => {
   const map = useMapEvents({
@@ -34,34 +23,42 @@ const MapView = ({ onLocationClick }) => {
   const [mapType, setMapType] = useState('satellite');
   const [map, setMap] = useState(null);
   const [fireData, setFireData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Convert H3 indices to geographic coordinates and categorize by intensity
-  useEffect(() => {
-    const processedData = mockFireDatabase.map(fire => {
+
+  // Function to categorize fire intensity and assign visual properties
+  const categorizeFireIntensity = (frpIntensity) => {
+    let intensityLevel = 'low';
+    let color = '#ffeb3b'; // Yellow for low
+    let radius = 8;
+
+    if (frpIntensity > 100) {
+      intensityLevel = 'medium';
+      color = '#ff9800'; // Orange for medium
+      radius = 12;
+    }
+
+    if (frpIntensity > 150) {
+      intensityLevel = 'high';
+      color = '#f44336'; // Red for high
+      radius = 16;
+    }
+
+    if (frpIntensity > 200) {
+      intensityLevel = 'extreme';
+      color = '#b71c1c'; // Dark red for extreme
+      radius = 20;
+    }
+
+    return { intensityLevel, color, radius };
+  };
+
+  // Function to process fire data for map visualization
+  const processFireData = (rawFireData) => {
+    return rawFireData.map(fire => {
       const [lat, lng] = cellToLatLng(fire.h3Index);
-
-      // Categorize intensity levels
-      let intensityLevel = 'low';
-      let color = '#ffeb3b'; // Yellow for low
-      let radius = 8;
-
-      if (fire.frpIntensity > 100) {
-        intensityLevel = 'medium';
-        color = '#ff9800'; // Orange for medium
-        radius = 12;
-      }
-
-      if (fire.frpIntensity > 150) {
-        intensityLevel = 'high';
-        color = '#f44336'; // Red for high
-        radius = 16;
-      }
-
-      if (fire.frpIntensity > 200) {
-        intensityLevel = 'extreme';
-        color = '#b71c1c'; // Dark red for extreme
-        radius = 20;
-      }
+      const { intensityLevel, color, radius } = categorizeFireIntensity(fire.frpIntensity);
 
       return {
         ...fire,
@@ -72,9 +69,37 @@ const MapView = ({ onLocationClick }) => {
         radius
       };
     });
+  };
 
-    setFireData(processedData);
+  // Load fire data from API
+  const loadFireData = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const rawFireData = await apiService.getWildfiresH3Format(200);
+      const processedData = processFireData(rawFireData);
+      setFireData(processedData);
+      
+    } catch (err) {
+      console.error('Error loading fire data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    loadFireData();
   }, []);
+
+  // Function to refresh data
+  const refreshData = () => {
+    loadFireData();
+  };
+
+
 
   const mapTypes = {
     satellite: {
@@ -129,7 +154,7 @@ const MapView = ({ onLocationClick }) => {
 
   return (
     <div className="map-view">
-      {/* Map Type Selector */}
+      {/* Map Controls */}
       <div className="map-controls">
         <div className="map-type-selector">
           {Object.keys(mapTypes).map((type) => (
@@ -142,7 +167,9 @@ const MapView = ({ onLocationClick }) => {
             </button>
           ))}
         </div>
-      </div>
+      </div>   
+    
+
 
       {/* Zoom Controls */}
       <div className="zoom-controls">
